@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexaBank — Secure Online Banking</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.min.js"></script>
+<style>
+:root {
+  --brand:#1a56db; --brand-dark:#1142ae; --brand-light:#e8f0fe;
+  --sidebar:#0f2642; --sidebar-hover:rgba(255,255,255,0.08);
+  --bg:#f0f4f9; --surface:#fff; --border:#e2e8f0;
+  --text:#1a1f36; --muted:#6b7280; --muted2:#94a3b8;
+  --green:#059669; --green-bg:#ecfdf5;
+  --yellow:#d97706; --yellow-bg:#fffbeb;
+  --red:#dc2626; --red-bg:#fef2f2;
+  --radius:12px; --shadow:0 2px 16px rgba(15,38,66,0.10);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* ── AUTH ── */
+.auth-wrap{min-height:100vh;display:flex;flex-direction:column;}
+.auth-header{background:var(--brand);padding:16px 32px;display:flex;align-items:center;justify-content:space-between;}
+.auth-header .logo{color:#fff;font-size:20px;font-weight:800;letter-spacing:-.5px;display:flex;align-items:center;gap:8px;}
+.auth-hero{background:linear-gradient(135deg,#1a56db,#0a2d6e);color:#fff;padding:48px 24px 70px;text-align:center;}
+.auth-hero h1{font-size:26px;font-weight:800;margin-bottom:6px;}
+.auth-hero p{font-size:14px;opacity:.8;}
+.auth-body{max-width:460px;margin:-44px auto 40px;padding:0 16px;}
+.card{background:var(--surface);border-radius:16px;box-shadow:var(--shadow);padding:32px 28px;margin-bottom:14px;}
+.card-title{font-size:17px;font-weight:700;margin-bottom:4px;}
+.card-sub{font-size:12px;color:var(--muted);margin-bottom:22px;}
+
+.inp-row{margin-bottom:14px;}
+.inp-row label{display:block;font-size:12px;font-weight:600;margin-bottom:5px;color:var(--muted);}
+.inp-row input{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;outline:none;transition:border .15s;}
+.inp-row input:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(26,86,219,.1);}
+
+.btn{display:block;width:100%;padding:12px;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;text-align:center;}
+.btn-primary{background:var(--brand);color:#fff;}
+.btn-primary:hover{background:var(--brand-dark);}
+.btn-primary:disabled{opacity:.6;cursor:not-allowed;}
+.btn-ghost{background:transparent;border:1.5px solid var(--border);color:var(--text);}
+.btn-ghost:hover{border-color:var(--brand);color:var(--brand);}
+.btn-red{background:var(--red);color:#fff;}
+
+/* ── SCENARIO PICKER ── */
+.sc-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;}
+.sc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.sc-btn{padding:10px 6px;border-radius:8px;border:1.5px solid var(--border);background:#fff;cursor:pointer;font-size:11px;font-weight:600;text-align:center;transition:all .15s;line-height:1.4;}
+.sc-btn span{font-size:20px;display:block;margin-bottom:2px;}
+.sc-btn:hover{border-color:var(--brand);color:var(--brand);background:var(--brand-light);}
+.sc-btn.sel{border-color:var(--brand);background:var(--brand);color:#fff;}
+.sc-btn.bad:hover{border-color:var(--red);background:var(--red-bg);color:var(--red);}
+.sc-btn.bad.sel{background:var(--red);border-color:var(--red);color:#fff;}
+
+.beh-bar{background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-top:12px;font-size:11px;}
+.beh-row{display:flex;justify-content:space-between;color:var(--muted);margin-bottom:5px;}
+.prog{height:4px;background:#e2e8f0;border-radius:2px;overflow:hidden;}
+.prog .fill{height:100%;background:var(--brand);border-radius:2px;transition:width .3s;}
+.beh-stats{display:flex;justify-content:space-between;margin-top:5px;color:var(--muted);}
+
+/* ── APP SHELL ── */
+#app{display:none;min-height:100vh;}
+.shell{display:flex;min-height:100vh;}
+
+/* ── SIDEBAR ── */
+.sidebar{width:220px;background:var(--sidebar);display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;}
+.sb-logo{padding:20px 18px 16px;color:#fff;font-size:18px;font-weight:800;letter-spacing:-.5px;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(255,255,255,.08);}
+.sb-nav{flex:1;padding:12px 10px;overflow-y:auto;}
+.sb-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;color:rgba(255,255,255,.7);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;margin-bottom:2px;}
+.sb-item:hover{background:var(--sidebar-hover);color:#fff;}
+.sb-item.active{background:rgba(26,86,219,.5);color:#fff;}
+.sb-item .ic{font-size:17px;width:22px;text-align:center;}
+.sb-sep{height:1px;background:rgba(255,255,255,.08);margin:10px 4px;}
+.sb-user{padding:14px 14px;border-top:1px solid rgba(255,255,255,.08);}
+.sb-user .uname{color:#fff;font-size:13px;font-weight:600;margin-bottom:2px;}
+.sb-user .urole{color:rgba(255,255,255,.5);font-size:11px;}
+.sb-logout{margin-top:8px;width:100%;padding:7px;background:rgba(220,38,38,.2);border:none;border-radius:6px;color:#fca5a5;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;}
+.sb-logout:hover{background:rgba(220,38,38,.4);}
+
+/* ── MAIN CONTENT ── */
+.main{flex:1;min-width:0;overflow-y:auto;}
+.page-header{padding:20px 28px 0;margin-bottom:20px;}
+.page-header h1{font-size:20px;font-weight:800;}
+.page-header p{font-size:13px;color:var(--muted);margin-top:3px;}
+
+.content-pad{padding:0 28px 28px;}
+
+/* ── STAT CARDS ── */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+.stat-card{background:var(--surface);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);}
+.stat-card .sc-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+.stat-card .sc-val{font-size:22px;font-weight:800;}
+.stat-card .sc-sub{font-size:11px;color:var(--muted);margin-top:3px;}
+
+/* ── BALANCE HERO ── */
+.balance-hero{background:linear-gradient(135deg,#1a56db,#0a2d6e);border-radius:16px;padding:24px;color:#fff;margin-bottom:20px;position:relative;overflow:hidden;}
+.balance-hero::after{content:'';position:absolute;right:-30px;top:-30px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.06);}
+.bh-label{font-size:12px;opacity:.75;margin-bottom:6px;}
+.bh-amount{font-size:36px;font-weight:800;letter-spacing:-1px;}
+.bh-acct{font-size:12px;opacity:.55;margin-top:4px;font-family:monospace;letter-spacing:.12em;}
+.bh-row{display:flex;gap:32px;margin-top:18px;}
+.bh-stat .bhs-l{font-size:11px;opacity:.6;}
+.bh-stat .bhs-v{font-size:15px;font-weight:700;}
+
+/* ── QUICK ACTIONS ── */
+.qa-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
+.qa-btn{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 10px;text-align:center;cursor:pointer;transition:all .15s;box-shadow:var(--shadow);}
+.qa-btn:hover{border-color:var(--brand);background:var(--brand-light);}
+.qa-btn .qi{font-size:24px;margin-bottom:6px;}
+.qa-btn .ql{font-size:11px;font-weight:600;color:var(--muted);}
+
+/* ── TABLE ── */
+.panel{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;}
+.panel-title{font-size:14px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;}
+.panel-title a{font-size:12px;color:var(--brand);cursor:pointer;font-weight:500;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{text-align:left;padding:8px 10px;color:var(--muted);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border);}
+td{padding:10px 10px;border-bottom:1px solid #f0f4f9;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#f8fafc;}
+
+/* ── BADGES ── */
+.badge{display:inline-block;padding:2px 8px;border-radius:5px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;}
+.badge.low   {background:var(--green-bg);color:var(--green);}
+.badge.medium{background:var(--yellow-bg);color:var(--yellow);}
+.badge.high  {background:var(--red-bg);color:var(--red);}
+.badge.allow {background:var(--green-bg);color:var(--green);}
+.badge.otp   {background:var(--yellow-bg);color:var(--yellow);}
+.badge.block {background:var(--red-bg);color:var(--red);}
+.badge.pending{background:#f0f4f9;color:var(--muted);}
+
+/* ── TWO COL LAYOUT ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;}
+
+/* ── FORM PANEL ── */
+.form-group{margin-bottom:14px;}
+.form-group label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;transition:border .15s;background:#fff;}
+.form-group input:focus,.form-group select:focus{border-color:var(--brand);}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.amt-wrap{position:relative;}
+.amt-wrap .sym{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--muted);}
+.amt-wrap input{padding-left:28px;}
+
+/* ── CARD VISUAL ── */
+.credit-card{background:linear-gradient(135deg,#1a56db,#7c3aed);border-radius:16px;padding:24px;color:#fff;max-width:340px;aspect-ratio:1.6;display:flex;flex-direction:column;justify-content:space-between;}
+.cc-chip{font-size:28px;}
+.cc-num{font-size:17px;letter-spacing:.18em;font-family:monospace;margin:8px 0;}
+.cc-row{display:flex;justify-content:space-between;font-size:11px;opacity:.8;}
+.cc-name{font-size:14px;font-weight:700;}
+.card-actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+.ca-btn{padding:8px 16px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;}
+.ca-btn:hover{border-color:var(--brand);color:var(--brand);}
+.ca-btn.danger:hover{border-color:var(--red);color:var(--red);}
+
+/* ── TX ITEM ── */
+.tx-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);}
+.tx-item:last-child{border-bottom:none;}
+.tx-icon{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.tx-icon.out{background:var(--red-bg);}
+.tx-icon.in {background:var(--green-bg);}
+.tx-icon.bill{background:var(--yellow-bg);}
+.tx-info{flex:1;}
+.tx-name{font-size:13px;font-weight:600;}
+.tx-date{font-size:11px;color:var(--muted);}
+.tx-risk-badge{font-size:10px;padding:1px 6px;border-radius:4px;font-weight:700;margin-top:2px;display:inline-block;}
+.tx-amount{font-size:14px;font-weight:700;text-align:right;}
+.tx-amount.out{color:var(--red);}
+.tx-amount.in {color:var(--green);}
+
+/* ── NOTIF ITEM ── */
+.notif-item{display:flex;gap:12px;padding:14px 0;border-bottom:1px solid var(--border);}
+.notif-item:last-child{border-bottom:none;}
+.notif-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.notif-dot.unread{background:var(--brand);}
+.notif-dot.read{background:var(--border);}
+.notif-title{font-size:13px;font-weight:600;margin-bottom:2px;}
+.notif-body{font-size:12px;color:var(--muted);}
+.notif-time{font-size:11px;color:var(--muted2);margin-top:4px;}
+
+/* ── AI MONITOR WIDGET ── */
+#ai-widget{position:fixed;bottom:20px;right:20px;z-index:500;font-size:13px;transition:all .3s;}
+.aiw-pill{background:var(--sidebar);color:#fff;border-radius:50px;padding:8px 14px;display:flex;align-items:center;gap:8px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.25);white-space:nowrap;}
+.aiw-dot{width:8px;height:8px;border-radius:50%;animation:pulse 2s infinite;}
+.aiw-dot.low{background:#22c55e;}
+.aiw-dot.medium{background:#eab308;}
+.aiw-dot.high{background:#ef4444;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+.aiw-panel{background:#1a1f36;border-radius:14px;padding:16px;width:280px;margin-bottom:10px;box-shadow:0 8px 32px rgba(0,0,0,.3);}
+.aiw-panel.hidden{display:none;}
+.aiwp-title{color:#e2e8f0;font-size:12px;font-weight:700;margin-bottom:12px;display:flex;justify-content:space-between;}
+.aiwp-score{text-align:center;margin-bottom:12px;}
+.aiwp-score .big{font-size:40px;font-weight:800;}
+.aiwp-score .lbl{font-size:11px;margin-top:2px;}
+.aiwp-bar{height:6px;background:#2d3748;border-radius:3px;overflow:hidden;margin-bottom:12px;}
+.aiwp-fill{height:100%;border-radius:3px;transition:width .5s,background .5s;}
+.aiwp-metrics{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.aiwp-m{background:rgba(255,255,255,.06);border-radius:6px;padding:6px 8px;}
+.aiwp-m .ml{font-size:10px;color:#94a3b8;margin-bottom:1px;}
+.aiwp-m .mv{font-size:13px;font-weight:700;color:#e2e8f0;}
+.aiw-close{color:#94a3b8;cursor:pointer;font-size:14px;}
+.aiw-close:hover{color:#fff;}
+
+/* ── MODALS ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:opacity .2s;}
+.overlay.show{opacity:1;pointer-events:auto;}
+.modal{background:#fff;border-radius:20px;padding:32px;max-width:460px;width:92%;position:relative;transform:translateY(20px);transition:transform .2s;max-height:90vh;overflow-y:auto;text-align:center;}
+.overlay.show .modal{transform:translateY(0);}
+.modal-x{position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);}
+.modal-x:hover{color:var(--text);}
+.m-icon{font-size:52px;margin-bottom:10px;}
+.m-title{font-size:20px;font-weight:800;margin-bottom:5px;}
+.m-sub{font-size:13px;color:var(--muted);margin-bottom:18px;}
+
+.score-ring{display:inline-flex;align-items:center;justify-content:center;width:90px;height:90px;border-radius:50%;border:5px solid;font-size:28px;font-weight:800;margin:0 auto 14px;}
+.score-ring.low   {border-color:var(--green);color:var(--green);}
+.score-ring.medium{border-color:var(--yellow);color:var(--yellow);}
+.score-ring.high  {border-color:var(--red);color:var(--red);}
+
+.risk-bar{margin:10px 0 16px;}
+.rb-track{height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;margin-top:4px;}
+.rb-fill{height:100%;border-radius:4px;transition:width .6s,background .6s;}
+
+.flags{text-align:left;margin-bottom:14px;}
+.flag{display:flex;gap:8px;align-items:flex-start;padding:7px 9px;border-radius:7px;margin-bottom:5px;font-size:12px;background:#f8fafc;}
+.flag.danger{background:var(--red-bg);}
+.flag.warn  {background:var(--yellow-bg);}
+.flag .fi{font-size:14px;flex-shrink:0;line-height:1.4;}
+.flag .ft{font-weight:700;font-size:11px;text-transform:uppercase;}
+.flag .fr{color:var(--muted);margin-top:1px;}
+
+/* OTP */
+.otp-boxes{display:flex;gap:8px;justify-content:center;margin:16px 0;}
+.otp-boxes input{width:44px;height:52px;text-align:center;font-size:20px;font-weight:700;border:2px solid var(--border);border-radius:9px;outline:none;}
+.otp-boxes input:focus{border-color:var(--brand);}
+.otp-code{font-size:26px;font-weight:800;letter-spacing:8px;color:var(--brand);margin:8px 0;}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(70px);background:#1a1f36;color:#fff;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;z-index:2000;transition:transform .3s;white-space:nowrap;max-width:90vw;}
+#toast.show{transform:translateX(-50%) translateY(0);}
+
+/* ── SPINNER ── */
+.spin{display:inline-block;width:16px;height:16px;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:5px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── CHART CONTAINER ── */
+.chart-wrap{position:relative;height:220px;}
+
+/* ── SETTINGS ── */
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border);}
+.setting-row:last-child{border-bottom:none;}
+.sr-label{font-size:13px;font-weight:600;}
+.sr-sub{font-size:12px;color:var(--muted);}
+.toggle{position:relative;width:40px;height:22px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-sl{position:absolute;inset:0;background:#ccc;border-radius:22px;cursor:pointer;transition:.3s;}
+.toggle-sl:before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s;}
+.toggle input:checked+.toggle-sl{background:var(--brand);}
+.toggle input:checked+.toggle-sl:before{transform:translateX(18px);}
+
+.profile-avatar{width:72px;height:72px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;margin:0 auto 12px;}
+
+/* ── LOAN PROGRESS ── */
+.loan-progress{margin:14px 0;}
+.lp-label{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px;}
+.lp-bar{height:10px;background:#e5e7eb;border-radius:5px;overflow:hidden;}
+.lp-fill{height:100%;background:var(--brand);border-radius:5px;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .sidebar{width:60px;}
+  .sb-item span:last-child,.sb-logo span:last-child,.sb-user .uname,.sb-user .urole,.sb-logout{display:none;}
+  .sb-logo{padding:16px;justify-content:center;}
+  .stat-row{grid-template-columns:1fr 1fr;}
+  .qa-grid{grid-template-columns:repeat(2,1fr);}
+  .two-col{grid-template-columns:1fr;}
+  .fg-row{grid-template-columns:1fr;}
+  .content-pad{padding:0 14px 20px;}
+  .page-header{padding:14px 14px 0;}
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════
+     AUTH SCREENS
+════════════════════════════════════ -->
+<div id="auth-wrap">
+
+<!-- LOGIN -->
+<div id="scr-login">
+  <div class="auth-header">
+    <div class="logo">&#9670; NexaBank</div>
+    <span style="font-size:13px;color:rgba(255,255,255,.7)">Personal Banking</span>
+  </div>
+  <div class="auth-hero">
+    <h1>Welcome Back</h1>
+    <p>Sign in securely — protected by FraudShield AI</p>
+  </div>
+  <div class="auth-body">
+    <div class="card">
+      <div class="card-title">Sign In</div>
+      <div class="card-sub">Enter your credentials to continue</div>
+      <div class="inp-row">
+        <label>Username</label>
+        <input id="l-user" type="text" placeholder="e.g. alice" autocomplete="username">
+      </div>
+      <div class="inp-row">
+        <label>Password</label>
+        <input id="l-pass" type="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <div class="beh-bar">
+        <div class="beh-row"><span>&#9672; AI Behavioral Capture</span><span id="beh-ks">0 keystrokes</span></div>
+        <div class="prog"><div class="fill" id="beh-fill" style="width:0%"></div></div>
+        <div class="beh-stats"><span>Keys: <span id="beh-dur">0</span>ms</span><span>Mouse: <span id="beh-mouse">0</span> events</span><span>WPM: <span id="beh-wpm">0</span></span></div>
+      </div>
+      <button class="btn btn-primary" id="btn-login" onclick="doLogin()" style="margin-top:16px">Sign In Securely</button>
+      <p style="text-align:center;margin-top:12px;font-size:13px;color:var(--muted)">No account? <span style="color:var(--brand);cursor:pointer;font-weight:600" onclick="show('scr-reg')">Register →</span></p>
+    </div>
+
+    <div class="card">
+      <div class="sc-label">&#9675; Test Fraud Scenario</div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Pick a preset — auto-fills credentials &amp; injects behavioral signals into the AI engine.</p>
+      <div class="sc-grid">
+        <div class="sc-btn sel" id="sc0" onclick="setSc('normal',this)"><span>&#10003;</span>Normal Login</div>
+        <div class="sc-btn bad" id="sc1" onclick="setSc('autofill',this)"><span>&#9675;</span>Autofill Bot</div>
+        <div class="sc-btn bad" id="sc2" onclick="setSc('robot',this)"><span>&#9650;</span>Robot Typing</div>
+        <div class="sc-btn bad" id="sc3" onclick="setSc('travel',this)"><span>&#8599;</span>Impossible Travel</div>
+        <div class="sc-btn bad" id="sc4" onclick="setSc('stolen',this)"><span>&#9670;</span>Stolen Creds</div>
+        <div class="sc-btn"    id="sc5" onclick="setSc('otp',this)"><span>&#9672;</span>Trigger OTP</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REGISTER -->
+<div id="scr-reg" style="display:none">
+  <div class="auth-header">
+    <div class="logo">&#9670; NexaBank</div>
+  </div>
+  <div class="auth-hero" style="padding-bottom:60px"><h1>Open an Account</h1><p>Join NexaBank in minutes</p></div>
+  <div class="auth-body">
+    <div class="card">
+      <div style="font-size:13px;color:var(--brand);cursor:pointer;margin-bottom:16px" onclick="show('scr-login')">← Back to login</div>
+      <div class="card-title">Create Account</div>
+      <div class="card-sub">Your account will be active immediately</div>
+      <div class="inp-row"><label>Username</label><input id="r-user" type="text" placeholder="Choose a username"></div>
+      <div class="inp-row"><label>Email</label><input id="r-email" type="email" placeholder="you@email.com"></div>
+      <div class="inp-row"><label>Password</label><input id="r-pass" type="password" placeholder="Min 8 characters"></div>
+      <button class="btn btn-primary" id="btn-reg" onclick="doRegister()">Create Account</button>
+      <p style="text-align:center;margin-top:12px;font-size:13px;color:var(--muted)">Have an account? <span style="color:var(--brand);cursor:pointer;font-weight:600" onclick="show('scr-login')">Sign in →</span></p>
+    </div>
+  </div>
+</div>
+</div><!-- /auth-wrap -->
+
+<!-- ════════════════════════════════════
+     BANKING APP
+════════════════════════════════════ -->
+<div id="app">
+<div class="shell">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sb-logo">&#9670; <span>NexaBank</span></div>
+  <nav class="sb-nav">
+    <div class="sb-item active" onclick="nav('dashboard')"><span class="ic">&#8962;</span><span>Dashboard</span></div>
+    <div class="sb-item" onclick="nav('accounts')"><span class="ic">&#9635;</span><span>Accounts</span></div>
+    <div class="sb-item" onclick="nav('transfer')"><span class="ic">&#8599;</span><span>Transfer</span></div>
+    <div class="sb-item" onclick="nav('bills')"><span class="ic">&#8801;</span><span>Pay Bills</span></div>
+    <div class="sb-item" onclick="nav('cards')"><span class="ic">&#9672;</span><span>My Cards</span></div>
+    <div class="sb-item" onclick="nav('loans')"><span class="ic">$</span><span>Loans</span></div>
+    <div class="sb-sep"></div>
+    <div class="sb-item" onclick="nav('notifications')"><span class="ic">&#9673;</span><span>Notifications</span></div>
+    <div class="sb-item" onclick="nav('settings')"><span class="ic">&#9881;</span><span>Settings</span></div>
+  </nav>
+  <div class="sb-user">
+    <div class="uname" id="sb-uname">—</div>
+    <div class="urole">Personal Account</div>
+    <button class="sb-logout" onclick="doLogout()">Sign Out</button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- ── DASHBOARD ── -->
+<div id="pg-dashboard" class="pg">
+  <div class="page-header"><h1>Good morning</h1><p>Here's your financial overview</p></div>
+  <div class="content-pad">
+    <div class="balance-hero">
+      <div class="bh-label">Total Available Balance</div>
+      <div class="bh-amount">$24,830.50</div>
+      <div class="bh-acct">ACCT •••• 4821 · Routing 021000021</div>
+      <div class="bh-row">
+        <div class="bh-stat"><div class="bhs-l">Income (Apr)</div><div class="bhs-v">+$6,200.00</div></div>
+        <div class="bh-stat"><div class="bhs-l">Spent (Apr)</div><div class="bhs-v">-$1,450.30</div></div>
+        <div class="bh-stat"><div class="bhs-l">Savings</div><div class="bhs-v">$11,240.00</div></div>
+      </div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-card"><div class="sc-lbl">Last Login Risk</div><div class="sc-val" id="db-risk-val" style="color:var(--green)">—</div><div class="sc-sub" id="db-risk-lbl">—</div></div>
+      <div class="stat-card"><div class="sc-lbl">Pending TX</div><div class="sc-val">3</div><div class="sc-sub">Being processed</div></div>
+      <div class="stat-card"><div class="sc-lbl">Rewards Points</div><div class="sc-val">4,820</div><div class="sc-sub">$48.20 value</div></div>
+      <div class="stat-card"><div class="sc-lbl">Credit Score</div><div class="sc-val" style="color:var(--green)">742</div><div class="sc-sub">Good standing</div></div>
+    </div>
+    <div class="qa-grid">
+      <div class="qa-btn" onclick="nav('transfer')"><div class="qi">&#8599;</div><div class="ql">Send Money</div></div>
+      <div class="qa-btn" onclick="nav('bills')"><div class="qi">&#8801;</div><div class="ql">Pay Bills</div></div>
+      <div class="qa-btn" onclick="nav('cards')"><div class="qi">&#9672;</div><div class="ql">My Cards</div></div>
+      <div class="qa-btn" onclick="nav('loans')"><div class="qi">$</div><div class="ql">Loan Center</div></div>
+    </div>
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-title">Recent Transactions <a onclick="nav('accounts')">View all</a></div>
+        <div id="db-tx-list">
+          <div class="tx-item"><div class="tx-icon in">&#8595;</div><div class="tx-info"><div class="tx-name">Salary Deposit</div><div class="tx-date">Apr 21, 2026</div></div><div class="tx-amount in">+$6,200.00</div></div>
+          <div class="tx-item"><div class="tx-icon out">&#9675;</div><div class="tx-info"><div class="tx-name">Whole Foods Market</div><div class="tx-date">Apr 20, 2026</div></div><div class="tx-amount out">-$124.50</div></div>
+          <div class="tx-item"><div class="tx-icon bill">&#8801;</div><div class="tx-info"><div class="tx-name">Electric Bill</div><div class="tx-date">Apr 18, 2026</div></div><div class="tx-amount out">-$98.00</div></div>
+          <div class="tx-item"><div class="tx-icon out">&#9675;</div><div class="tx-info"><div class="tx-name">Pizza Palace</div><div class="tx-date">Apr 17, 2026</div></div><div class="tx-amount out">-$32.40</div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Spending by Category</div>
+        <div class="chart-wrap"><canvas id="spendChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── ACCOUNTS ── -->
+<div id="pg-accounts" class="pg" style="display:none">
+  <div class="page-header"><h1>My Accounts</h1><p>All your accounts in one place</p></div>
+  <div class="content-pad">
+    <div class="two-col" style="margin-bottom:18px">
+      <div class="panel" style="background:linear-gradient(135deg,#1a56db,#0a2d6e);color:#fff">
+        <div style="font-size:11px;opacity:.7;margin-bottom:4px">Checking Account</div>
+        <div style="font-size:28px;font-weight:800">$24,830.50</div>
+        <div style="font-size:11px;opacity:.5;margin-top:3px;font-family:monospace">•••• •••• •••• 4821</div>
+        <div style="margin-top:14px;font-size:12px;opacity:.7">Routing: 021000021</div>
+      </div>
+      <div class="panel" style="background:linear-gradient(135deg,#059669,#065f46);color:#fff">
+        <div style="font-size:11px;opacity:.7;margin-bottom:4px">Savings Account</div>
+        <div style="font-size:28px;font-weight:800">$11,240.00</div>
+        <div style="font-size:11px;opacity:.5;margin-top:3px;font-family:monospace">•••• •••• •••• 7732</div>
+        <div style="margin-top:14px;font-size:12px;opacity:.7">APY: 4.50%</div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Transaction History</div>
+      <table>
+        <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Risk</th><th>Amount</th></tr></thead>
+        <tbody id="acct-table">
+          <tr><td>Apr 21</td><td>Salary Deposit — TechCorp Inc</td><td>Income</td><td><span class="badge low">LOW</span></td><td style="color:var(--green);font-weight:700">+$6,200.00</td></tr>
+          <tr><td>Apr 20</td><td>Whole Foods Market</td><td>Groceries</td><td><span class="badge low">LOW</span></td><td style="color:var(--red)">-$124.50</td></tr>
+          <tr><td>Apr 18</td><td>City Electric Co</td><td>Utilities</td><td><span class="badge low">LOW</span></td><td style="color:var(--red)">-$98.00</td></tr>
+          <tr><td>Apr 17</td><td>Pizza Palace</td><td>Dining</td><td><span class="badge low">LOW</span></td><td style="color:var(--red)">-$32.40</td></tr>
+          <tr><td>Apr 15</td><td>Netflix Subscription</td><td>Entertainment</td><td><span class="badge low">LOW</span></td><td style="color:var(--red)">-$15.99</td></tr>
+          <tr><td>Apr 14</td><td>Amazon.com</td><td>Shopping</td><td><span class="badge low">LOW</span></td><td style="color:var(--red)">-$89.99</td></tr>
+          <tr><td>Apr 10</td><td>Gym Membership</td><td>Health</td><td><span class="badge low">LOW</span></td><td style="color:var(--red)">-$45.00</td></tr>
+          <tr><td>Apr 05</td><td>ATM Withdrawal</td><td>Cash</td><td><span class="badge medium">MEDIUM</span></td><td style="color:var(--red)">-$200.00</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ── TRANSFER ── -->
+<div id="pg-transfer" class="pg" style="display:none">
+  <div class="page-header"><h1>Send Money</h1><p>AI monitors every transfer for fraud in real-time</p></div>
+  <div class="content-pad">
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-title">Transfer Details</div>
+        <div class="fg-row">
+          <div class="form-group"><label>From Account</label>
+            <select id="tx-from"><option>Checking ••4821 — $24,830.50</option><option>Savings ••7732 — $11,240.00</option></select>
+          </div>
+          <div class="form-group"><label>To / Recipient ID</label><input id="tx-to" value="recipient_xyz" placeholder="Username or account"></div>
+        </div>
+        <div class="fg-row">
+          <div class="form-group"><label>Amount (USD)</label>
+            <div class="amt-wrap"><span class="sym">$</span><input id="tx-amt" type="number" value="500" min="1"></div>
+          </div>
+          <div class="form-group"><label>Type</label>
+            <select id="tx-type"><option value="TRANSFER">Bank Transfer</option><option value="PAYMENT">Payment</option><option value="WITHDRAWAL">Withdrawal</option></select>
+          </div>
+        </div>
+        <div class="form-group"><label>Memo (optional)</label><input id="tx-memo" placeholder="What's this for?"></div>
+        <div class="form-group"><label>Device ID (for fraud demo)</label><input id="tx-dev" value="a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4" style="font-family:monospace;font-size:11px"></div>
+        <button class="btn btn-primary" onclick="doTransfer()">Send Transfer →</button>
+      </div>
+      <div>
+        <div class="panel" style="margin-bottom:14px">
+          <div class="panel-title">&#9675; Fraud Test Presets</div>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Select a preset to auto-fill suspicious transaction parameters:</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div class="sc-btn sel" id="tp0" onclick="setTxP('normal',this)"><span>&#10003;</span>Normal $500</div>
+            <div class="sc-btn bad" id="tp1" onclick="setTxP('large',this)"><span>$</span>Large $25k</div>
+            <div class="sc-btn bad" id="tp2" onclick="setTxP('newdev',this)"><span>&#9672;</span>New Device</div>
+            <div class="sc-btn bad" id="tp3" onclick="setTxP('intl',this)"><span>&#8599;</span>Intl $9,500</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Recent Transfers</div>
+          <div id="tx-history-list">
+            <div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">No transfers yet — send one above.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── BILLS ── -->
+<div id="pg-bills" class="pg" style="display:none">
+  <div class="page-header"><h1>Pay Bills</h1><p>Fraud-checked before processing</p></div>
+  <div class="content-pad">
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-title">Bill Payment</div>
+        <div class="form-group"><label>Biller</label>
+          <select id="bill-biller" onchange="setBiller()">
+            <option value="City Electric Co|electricity|98">City Electric Co — $98.00</option>
+            <option value="Comcast Internet|utilities|79">Comcast Internet — $79.00</option>
+            <option value="Water Authority|utilities|45">City Water Authority — $45.00</option>
+            <option value="Insurance Co|insurance|320">Auto Insurance — $320.00</option>
+            <option value="Mortgage Lender|mortgage|1850">Mortgage — $1,850.00</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Amount</label>
+          <div class="amt-wrap"><span class="sym">$</span><input id="bill-amt" type="number" value="98"></div>
+        </div>
+        <div class="form-group"><label>Account to Debit</label>
+          <select id="bill-from"><option>Checking ••4821 — $24,830.50</option><option>Savings ••7732 — $11,240.00</option></select>
+        </div>
+        <button class="btn btn-primary" onclick="doBill()">Pay Bill →</button>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Scheduled Bills</div>
+        <div class="tx-item"><div class="tx-icon bill">&#9650;</div><div class="tx-info"><div class="tx-name">City Electric Co</div><div class="tx-date">Due Apr 30 · Auto-pay ON</div></div><div class="tx-amount out">$98.00</div></div>
+        <div class="tx-item"><div class="tx-icon bill">&#9673;</div><div class="tx-info"><div class="tx-name">Comcast Internet</div><div class="tx-date">Due May 1 · Auto-pay ON</div></div><div class="tx-amount out">$79.00</div></div>
+        <div class="tx-item"><div class="tx-icon bill">&#8962;</div><div class="tx-info"><div class="tx-name">Mortgage Payment</div><div class="tx-date">Due May 1 · Manual</div></div><div class="tx-amount out">$1,850.00</div></div>
+        <div class="tx-item"><div class="tx-icon bill">&#9675;</div><div class="tx-info"><div class="tx-name">Water Authority</div><div class="tx-date">Due May 5 · Auto-pay ON</div></div><div class="tx-amount out">$45.00</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── CARDS ── -->
+<div id="pg-cards" class="pg" style="display:none">
+  <div class="page-header"><h1>My Cards</h1><p>Manage your debit and credit cards</p></div>
+  <div class="content-pad">
+    <div class="two-col">
+      <div>
+        <div class="credit-card" id="main-card">
+          <div><div class="cc-chip">&#9635;</div></div>
+          <div>
+            <div class="cc-num">4821 •••• •••• 3912</div>
+            <div class="cc-row">
+              <div><div style="font-size:10px;opacity:.7">CARD HOLDER</div><div class="cc-name" id="cc-name">ALICE DOE</div></div>
+              <div><div style="font-size:10px;opacity:.7">EXPIRES</div><div style="font-weight:700;font-size:13px">09/28</div></div>
+              <div><div style="font-size:10px;opacity:.7">CVV</div><div style="font-weight:700;font-size:13px">•••</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card-actions">
+          <button class="ca-btn" onclick="toast('Card frozen temporarily.')">&#9672; Freeze Card</button>
+          <button class="ca-btn" onclick="toast('PIN reset email sent.')">&#9670; Reset PIN</button>
+          <button class="ca-btn danger" onclick="toast('Card reported lost/stolen.')">&#10007; Report Lost</button>
+        </div>
+      </div>
+      <div>
+        <div class="panel" style="margin-bottom:14px">
+          <div class="panel-title">Card Limits</div>
+          <div class="setting-row"><div><div class="sr-label">Daily Limit</div><div class="sr-sub">$5,000 / day</div></div><button class="ca-btn" onclick="toast('Limit updated.')">Edit</button></div>
+          <div class="setting-row"><div><div class="sr-label">Online Purchases</div><div class="sr-sub">$2,000 / transaction</div></div><button class="ca-btn" onclick="toast('Limit updated.')">Edit</button></div>
+          <div class="setting-row"><div><div class="sr-label">International</div><div class="sr-sub">Enabled</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-sl"></span></label></div>
+          <div class="setting-row"><div><div class="sr-label">Contactless Pay</div><div class="sr-sub">Tap to pay</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-sl"></span></label></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Card Activity (this month)</div>
+          <div class="tx-item"><div class="tx-icon out">&#9675;</div><div class="tx-info"><div class="tx-name">Whole Foods</div><div class="tx-date">Apr 20</div></div><div class="tx-amount out">-$124.50</div></div>
+          <div class="tx-item"><div class="tx-icon out">&#9675;</div><div class="tx-info"><div class="tx-name">Shell Gas Station</div><div class="tx-date">Apr 19</div></div><div class="tx-amount out">-$58.20</div></div>
+          <div class="tx-item"><div class="tx-icon out">&#9675;</div><div class="tx-info"><div class="tx-name">Starbucks</div><div class="tx-date">Apr 18</div></div><div class="tx-amount out">-$6.50</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── LOANS ── -->
+<div id="pg-loans" class="pg" style="display:none">
+  <div class="page-header"><h1>Loan Center</h1><p>Manage your loans and payments</p></div>
+  <div class="content-pad">
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-title">Home Mortgage</div>
+        <div style="font-size:28px;font-weight:800;color:var(--brand);margin-bottom:4px">$248,500</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:14px">Remaining balance</div>
+        <div class="loan-progress">
+          <div class="lp-label"><span>Paid: $51,500</span><span>Total: $300,000</span></div>
+          <div class="lp-bar"><div class="lp-fill" style="width:17%"></div></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:5px">17% paid off · 26 years remaining</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:14px">
+          <div><div style="font-size:11px;color:var(--muted)">Monthly</div><div style="font-weight:700">$1,850</div></div>
+          <div><div style="font-size:11px;color:var(--muted)">Rate</div><div style="font-weight:700">6.25% APR</div></div>
+          <div><div style="font-size:11px;color:var(--muted)">Next Due</div><div style="font-weight:700">May 1</div></div>
+        </div>
+        <button class="btn btn-primary" style="margin-top:16px" onclick="makePayment()">Make Payment</button>
+      </div>
+      <div>
+        <div class="panel" style="margin-bottom:14px">
+          <div class="panel-title">Auto Loan</div>
+          <div style="font-size:22px;font-weight:800;color:var(--brand)">$12,300</div>
+          <div style="font-size:12px;color:var(--muted)">Remaining · 8.9% APR</div>
+          <div class="loan-progress" style="margin-top:12px">
+            <div class="lp-label"><span>Paid: $7,700</span><span>Total: $20,000</span></div>
+            <div class="lp-bar"><div class="lp-fill" style="width:38.5%"></div></div>
+          </div>
+          <button class="btn btn-ghost" style="margin-top:12px" onclick="toast('Payment of $342 processed.')">Pay $342.00</button>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Apply for Credit</div>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Based on your credit score of 742, you qualify for:</p>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <button class="btn btn-ghost" onclick="toast('Personal loan application submitted.')">$ Personal Loan up to $25,000</button>
+            <button class="btn btn-ghost" onclick="toast('Credit card application submitted.')">&#9635; Platinum Card — 0% APR 18 mo</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── NOTIFICATIONS ── -->
+<div id="pg-notifications" class="pg" style="display:none">
+  <div class="page-header"><h1>Notifications</h1><p>Security alerts &amp; account activity</p></div>
+  <div class="content-pad">
+    <div class="panel">
+      <div id="notif-list">
+        <div class="notif-item"><div class="notif-dot unread"></div><div><div class="notif-title">&#9650; Fraud Alert — Login Blocked</div><div class="notif-body">A login attempt from IP 45.33.99.101 was blocked. Device fingerprint did not match your profile. If this was you, contact support.</div><div class="notif-time">Just now</div></div></div>
+        <div class="notif-item"><div class="notif-dot unread"></div><div><div class="notif-title">&#10003; Successful Login</div><div class="notif-body">You signed in from Chrome on Windows · 192.168.1.100 · Risk score: LOW</div><div class="notif-time">2 minutes ago</div></div></div>
+        <div class="notif-item"><div class="notif-dot read"></div><div><div class="notif-title">$ Salary Deposited</div><div class="notif-body">$6,200.00 has been credited to your Checking account from TechCorp Inc.</div><div class="notif-time">Apr 21, 2026</div></div></div>
+        <div class="notif-item"><div class="notif-dot read"></div><div><div class="notif-title">&#9650; Unusual Location Detected</div><div class="notif-body">A transaction was initiated from an unfamiliar location. OTP verification was triggered.</div><div class="notif-time">Apr 19, 2026</div></div></div>
+        <div class="notif-item"><div class="notif-dot read"></div><div><div class="notif-title">&#9635; Monthly Statement Ready</div><div class="notif-body">Your March 2026 account statement is available to download.</div><div class="notif-time">Apr 1, 2026</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SETTINGS ── -->
+<div id="pg-settings" class="pg" style="display:none">
+  <div class="page-header"><h1>Settings</h1><p>Account &amp; security preferences</p></div>
+  <div class="content-pad">
+    <div class="two-col">
+      <div>
+        <div class="panel" style="margin-bottom:14px">
+          <div class="profile-avatar" id="set-avatar">?</div>
+          <div style="text-align:center;margin-bottom:16px">
+            <div style="font-size:16px;font-weight:700" id="set-uname">—</div>
+            <div style="font-size:13px;color:var(--muted)">Personal Account · Member since 2024</div>
+          </div>
+          <div class="form-group"><label>Full Name</label><input value="Alice Doe"></div>
+          <div class="form-group"><label>Email</label><input id="set-email" value="alice@nexabank.com"></div>
+          <div class="form-group"><label>Phone</label><input value="+1 (555) 012-3456"></div>
+          <button class="btn btn-primary" onclick="toast('Profile updated.')">Save Changes</button>
+        </div>
+      </div>
+      <div>
+        <div class="panel" style="margin-bottom:14px">
+          <div class="panel-title">Security Settings</div>
+          <div class="setting-row"><div><div class="sr-label">Two-Factor Authentication</div><div class="sr-sub">SMS verification on login</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-sl"></span></label></div>
+          <div class="setting-row"><div><div class="sr-label">AI Fraud Monitoring</div><div class="sr-sub">Real-time behavioral analysis</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-sl"></span></label></div>
+          <div class="setting-row"><div><div class="sr-label">Login Alerts</div><div class="sr-sub">Email on new device login</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-sl"></span></label></div>
+          <div class="setting-row"><div><div class="sr-label">Transaction Alerts</div><div class="sr-sub">SMS for transfers &gt;$500</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-sl"></span></label></div>
+          <div class="setting-row"><div><div class="sr-label">Biometric Login</div><div class="sr-sub">Face/fingerprint on mobile</div></div><label class="toggle"><input type="checkbox"><span class="toggle-sl"></span></label></div>
+          <button class="btn btn-ghost" style="margin-top:14px" onclick="toast('Password reset email sent.')">Change Password</button>
+        </div>
+        <div class="panel">
+          <div class="panel-title">FraudShield AI Status</div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <div style="width:10px;height:10px;border-radius:50%;background:var(--green);animation:pulse 2s infinite"></div>
+            <span style="font-size:13px;font-weight:600;color:var(--green)">Active &amp; Monitoring</span>
+          </div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.6">
+            AI is continuously analyzing your session behavior including keystroke patterns, mouse dynamics, navigation flow, and transaction patterns to detect fraud in real-time.
+          </div>
+          <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
+            <div style="background:#f0f4f9;border-radius:8px;padding:8px"><div style="color:var(--muted)">Model</div><div style="font-weight:700">IsolationForest + LR</div></div>
+            <div style="background:#f0f4f9;border-radius:8px;padding:8px"><div style="color:var(--muted)">Response</div><div style="font-weight:700">&lt; 1 second</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+</div><!-- /shell -->
+
+<!-- ════ AI MONITOR WIDGET ════ -->
+<div id="ai-widget">
+  <div class="aiw-panel hidden" id="aiw-panel">
+    <div class="aiwp-title">
+      <span>&#9672; FraudShield AI — Live Monitor</span>
+      <button class="aiw-close" onclick="toggleWidget()">&#10005;</button>
+    </div>
+    <div class="aiwp-score">
+      <div class="big" id="aiw-score" style="color:#22c55e">—</div>
+      <div class="lbl" id="aiw-lbl" style="color:#22c55e">LOW RISK</div>
+    </div>
+    <div class="aiwp-bar"><div class="aiwp-fill" id="aiw-bar" style="width:0%;background:#22c55e"></div></div>
+    <div class="aiwp-metrics">
+      <div class="aiwp-m"><div class="ml">Keystrokes/min</div><div class="mv" id="aw-ks">0</div></div>
+      <div class="aiwp-m"><div class="ml">Mouse speed</div><div class="mv" id="aw-ms">Normal</div></div>
+      <div class="aiwp-m"><div class="ml">Session</div><div class="mv" id="aw-sess">0:00</div></div>
+      <div class="aiwp-m"><div class="ml">Page</div><div class="mv" id="aw-page">—</div></div>
+      <div class="aiwp-m"><div class="ml">Copy-paste</div><div class="mv" id="aw-paste">None</div></div>
+      <div class="aiwp-m"><div class="ml">Tab switches</div><div class="mv" id="aw-tabs">0</div></div>
+    </div>
+  </div>
+  <div class="aiw-pill" onclick="toggleWidget()">
+    <div class="aiw-dot low" id="aiw-dot"></div>
+    <span>&#9672; AI Risk: <strong id="aiw-pill-score">—</strong></span>
+  </div>
+</div>
+
+</div><!-- /app -->
+
+<!-- ════ MODALS ════ -->
+<!-- Fraud Result -->
+<div class="overlay" id="m-result">
+  <div class="modal">
+    <button class="modal-x" onclick="closeM('m-result')">&#10005;</button>
+    <div class="m-icon" id="mr-icon">&#9672;</div>
+    <div class="m-title" id="mr-title">—</div>
+    <div class="m-sub" id="mr-sub">—</div>
+    <div class="score-ring low" id="mr-ring">—</div>
+    <div class="risk-bar"><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted)"><span>Low (0)</span><span>High (100)</span></div><div class="rb-track"><div class="rb-fill" id="mr-bar" style="width:0%"></div></div></div>
+    <div class="flags" id="mr-flags"></div>
+    <div id="mr-action"></div>
+  </div>
+</div>
+
+<!-- OTP -->
+<div class="overlay" id="m-otp">
+  <div class="modal">
+    <div class="m-icon">&#9672;</div>
+    <div class="m-title">Verify Your Identity</div>
+    <div class="m-sub">Unusual activity detected. Enter the 6-digit code sent to your phone.<br><span style="font-size:12px;color:var(--muted)">(Simulated — use code below)</span></div>
+    <div class="otp-code" id="otp-display">——</div>
+    <div class="otp-boxes">
+      <input type="text" maxlength="1" class="od" oninput="onOtp(this,0)">
+      <input type="text" maxlength="1" class="od" oninput="onOtp(this,1)">
+      <input type="text" maxlength="1" class="od" oninput="onOtp(this,2)">
+      <input type="text" maxlength="1" class="od" oninput="onOtp(this,3)">
+      <input type="text" maxlength="1" class="od" oninput="onOtp(this,4)">
+      <input type="text" maxlength="1" class="od" oninput="onOtp(this,5)">
+    </div>
+    <button class="btn btn-primary" onclick="verifyOTP()">Verify Code</button>
+    <div style="margin-top:10px;font-size:13px;color:var(--muted);cursor:pointer" onclick="closeM('m-otp')">Cancel</div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════
+const API = 'http://localhost:8000/api';
+const BC  = new BroadcastChannel('fraudshield-monitor');
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+const S = {
+  scenario: 'normal', userId: null, username: null,
+  sessionStart: null, currentPage: 'dashboard',
+  // login behavioral
+  loginStart: null, keystrokes: [], mouseEvents: 0, lastKey: null,
+  // app behavioral
+  appKeystrokes: [], appMouse: 0, appMouseSpeed: 0,
+  pasteCount: 0, tabSwitches: 0, liveRisk: 0,
+  riskHistory: [],
+  // otp
+  otpCode: null, pendingLogin: null,
+  // transactions
+  txHistory: [],
+  // widget
+  widgetOpen: false,
+};
+
+// ═══════════════════════════════════════════════════════
+// SCENARIOS
+// ═══════════════════════════════════════════════════════
+const SC = {
+  normal:  { username:'alice', password:'SecurePass123!', behavioral:{ login_duration_ms:5200,keystroke_intervals:[110,95,130,105,120,88,115,102],mouse_event_count:14,typing_speed_wpm:42,autofill_suspected:false }, device:{ user_agent:'Mozilla/5.0 (Windows NT 10.0) Chrome/125.0',screen_res:'1920x1080',device_id:'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4' }, ip:'192.168.1.100' },
+  autofill:{ username:'alice', password:'SecurePass123!', behavioral:{ login_duration_ms:120,keystroke_intervals:[],mouse_event_count:0,typing_speed_wpm:0,autofill_suspected:true }, device:{ user_agent:'Mozilla/5.0 (Linux; Android 13) Chrome/125.0',screen_res:'1080x2400',device_id:'deadbeef12345678deadbeef12345678' }, ip:'45.33.99.101' },
+  robot:   { username:'alice', password:'SecurePass123!', behavioral:{ login_duration_ms:180,keystroke_intervals:[15,12,18,10,14,11],mouse_event_count:1,typing_speed_wpm:320,autofill_suspected:false }, device:{ user_agent:'Mozilla/5.0 (Windows NT 10.0) Chrome/125.0',screen_res:'1920x1080',device_id:'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4' }, ip:'192.168.1.100' },
+  travel:  { username:'alice', password:'SecurePass123!', behavioral:{ login_duration_ms:3800,keystroke_intervals:[95,110,88,102],mouse_event_count:8,typing_speed_wpm:38,autofill_suspected:false }, device:{ user_agent:'Mozilla/5.0 (iPhone) Safari/604',screen_res:'390x844',device_id:'ffff0000aaaa1111ffff0000aaaa1111' }, ip:'103.45.67.89', geo_distance_km:8500 },
+  stolen:  { username:'alice', password:'SecurePass123!', behavioral:{ login_duration_ms:350,keystroke_intervals:[25,30,22,28],mouse_event_count:0,typing_speed_wpm:15,autofill_suspected:false }, device:{ user_agent:'Mozilla/5.0 (X11; Linux) Firefox/120.0',screen_res:'1366x768',device_id:'aaaabbbbccccdddd0000111122223333' }, ip:'185.220.101.45' },
+  otp:     { username:'alice', password:'SecurePass123!', behavioral:{ login_duration_ms:2800,keystroke_intervals:[80,95,75,90],mouse_event_count:5,typing_speed_wpm:25,autofill_suspected:false }, device:{ user_agent:'Mozilla/5.0 (Macintosh) Safari/604',screen_res:'1440x900',device_id:'99887766554433221100ffeeddccbbaa' }, ip:'10.0.2.15' },
+};
+
+const TX_PRESETS = {
+  normal:{ amt:500,  dev:'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4', to:'friend_bob',       type:'PAYMENT'  },
+  large: { amt:25000,dev:'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4', to:'unknown_recipient', type:'TRANSFER' },
+  newdev:{ amt:800,  dev:'deadbeef12345678deadbeef12345678', to:'recipient_xyz',      type:'TRANSFER' },
+  intl:  { amt:9500, dev:'ffff0000aaaa1111ffff0000aaaa1111', to:'overseas_acct',      type:'TRANSFER' },
+};
+
+// ═══════════════════════════════════════════════════════
+// BEHAVIORAL TRACKING (login screen)
+// ═══════════════════════════════════════════════════════
+['l-user','l-pass'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('focus', () => { if (!S.loginStart) S.loginStart = Date.now(); });
+  el.addEventListener('keydown', e => {
+    if (!S.loginStart) S.loginStart = Date.now();
+    const now = Date.now();
+    if (S.lastKey) S.keystrokes.push(now - S.lastKey);
+    S.lastKey = now;
+    updateBehMeter();
+  });
+});
+document.getElementById('scr-login').addEventListener('mousemove', () => { S.mouseEvents++; });
+
+function updateBehMeter() {
+  const n = S.keystrokes.length;
+  document.getElementById('beh-ks').textContent = n + ' keystrokes';
+  document.getElementById('beh-fill').style.width = Math.min(100, n * 6) + '%';
+  const dur = S.loginStart ? Date.now() - S.loginStart : 0;
+  document.getElementById('beh-dur').textContent = dur;
+  document.getElementById('beh-mouse').textContent = S.mouseEvents;
+  const avg = n > 1 ? S.keystrokes.reduce((a,b)=>a+b,0)/n : 0;
+  const wpm = avg > 0 ? Math.round(60000 / avg / 5) : 0;
+  document.getElementById('beh-wpm').textContent = wpm;
+}
+
+// ═══════════════════════════════════════════════════════
+// APP BEHAVIORAL TRACKING (after login)
+// ═══════════════════════════════════════════════════════
+let lastMouseTime = Date.now(), lastMousePos = {x:0,y:0};
+document.addEventListener('keydown', e => {
+  if (!S.sessionStart) return;
+  S.appKeystrokes.push(Date.now());
+  if (S.appKeystrokes.length > 100) S.appKeystrokes.shift();
+});
+document.addEventListener('mousemove', e => {
+  if (!S.sessionStart) return;
+  S.appMouse++;
+  const now = Date.now(), dt = now - lastMouseTime;
+  if (dt > 0) {
+    const dx = e.clientX - lastMousePos.x, dy = e.clientY - lastMousePos.y;
+    const speed = Math.sqrt(dx*dx+dy*dy) / dt * 100;
+    S.appMouseSpeed = Math.round(speed);
+  }
+  lastMouseTime = Date.now(); lastMousePos = {x:e.clientX, y:e.clientY};
+});
+document.addEventListener('paste', () => { S.pasteCount++; updateWidget(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) S.tabSwitches++; });
+
+// ═══════════════════════════════════════════════════════
+// SCENARIO PICKER
+// ═══════════════════════════════════════════════════════
+function setSc(name, el) {
+  S.scenario = name;
+  document.querySelectorAll('.sc-btn').forEach(b => b.classList.remove('sel'));
+  el.classList.add('sel');
+  const sc = SC[name];
+  document.getElementById('l-user').value = sc.username;
+  document.getElementById('l-pass').value = sc.password;
+  S.loginStart = null; S.keystrokes = []; S.mouseEvents = 0; S.lastKey = null;
+  updateBehMeter();
+}
+
+function setTxP(name, el) {
+  document.querySelectorAll('[id^=tp]').forEach(b => b.classList.remove('sel'));
+  el.classList.add('sel');
+  const p = TX_PRESETS[name];
+  if (p) {
+    document.getElementById('tx-amt').value = p.amt;
+    document.getElementById('tx-dev').value = p.dev;
+    document.getElementById('tx-to').value  = p.to;
+    document.getElementById('tx-type').value = p.type;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// PAGE HELPERS
+// ═══════════════════════════════════════════════════════
+function show(id) {
+  ['scr-login','scr-reg'].forEach(s => document.getElementById(s).style.display = 'none');
+  document.getElementById(id).style.display = '';
+}
+
+function nav(page) {
+  S.currentPage = page;
+  document.querySelectorAll('.pg').forEach(p => p.style.display = 'none');
+  document.getElementById('pg-' + page).style.display = '';
+  document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
+  const items = document.querySelectorAll('.sb-item');
+  const pageIndex = ['dashboard','accounts','transfer','bills','cards','loans','notifications','settings'];
+  const idx = pageIndex.indexOf(page);
+  if (idx >= 0 && items[idx]) items[idx].classList.add('active');
+  document.getElementById('aw-page').textContent = page;
+  BC.postMessage({ type:'nav', page, username:S.username, timestamp:new Date().toISOString() });
+}
+
+// ═══════════════════════════════════════════════════════
+// AUTH — REGISTER
+// ═══════════════════════════════════════════════════════
+async function doRegister() {
+  const btn = document.getElementById('btn-reg');
+  const username = document.getElementById('r-user').value.trim();
+  const email    = document.getElementById('r-email').value.trim();
+  const password = document.getElementById('r-pass').value;
+  if (!username || !email || !password) { toast('Fill all fields.'); return; }
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Creating…';
+  try {
+    const r = await fetch(`${API}/auth/register`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,email,password})});
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail||'Failed');
+    toast('Account created. Sign in.');
+    document.getElementById('l-user').value = username;
+    document.getElementById('l-pass').value = password;
+    show('scr-login');
+  } catch(e) { toast('Error: ' + e.message); }
+  finally { btn.disabled=false; btn.textContent='Create Account'; }
+}
+
+// ═══════════════════════════════════════════════════════
+// AUTH — LOGIN
+// ═══════════════════════════════════════════════════════
+async function doLogin() {
+  const btn  = document.getElementById('btn-login');
+  const user = document.getElementById('l-user').value.trim();
+  const pass = document.getElementById('l-pass').value;
+  if (!user || !pass) { toast('Enter credentials.'); return; }
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Verifying with AI…';
+
+  const sc = SC[S.scenario];
+  const beh = sc ? sc.behavioral : {
+    login_duration_ms: S.loginStart ? Date.now()-S.loginStart : 4000,
+    keystroke_intervals: S.keystrokes,
+    mouse_event_count: S.mouseEvents,
+    typing_speed_wpm: S.keystrokes.length > 1 ? Math.round(60000/(S.keystrokes.reduce((a,b)=>a+b,0)/S.keystrokes.length)/5) : 30,
+    autofill_suspected: S.keystrokes.length === 0,
+  };
+  const device = sc ? sc.device : { user_agent:navigator.userAgent, screen_res:`${screen.width}x${screen.height}`, device_id:'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4' };
+  const payload = { username:user, password:pass, behavioral:beh, device, ip_address: sc ? sc.ip : '192.168.1.100' };
+  if (sc?.geo_distance_km) payload.geo_distance_km = sc.geo_distance_km;
+
+  try {
+    const r = await fetch(`${API}/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const d = await r.json();
+    if (r.status === 404 || d.detail?.includes('not found')) { toast('User not found. Register first.'); return; }
+
+    S.username = user; S.userId = d.user_id || null;
+    S.pendingLogin = { score:d.risk?.risk_score??0, decision:d.risk?.decision??'ALLOW', label:d.risk?.risk_label??'LOW', flags:d.risk?.risk_factors?.flags??[] };
+
+    if (d.decision === 'OTP_REQUIRED') {
+      S.otpCode = String(Math.floor(100000+Math.random()*900000));
+      document.getElementById('otp-display').textContent = S.otpCode;
+      document.querySelectorAll('.od').forEach(i=>i.value='');
+      openM('m-otp');
+    } else {
+      showLoginResult(S.pendingLogin);
+    }
+  } catch(e) { toast('Cannot reach API. Backend running on port 8000?'); console.error(e); }
+  finally { btn.disabled=false; btn.textContent='Sign In Securely'; }
+}
+
+function showLoginResult({score, decision, label, flags}) {
+  const lbl = label.toLowerCase();
+  const icons = { ALLOW:'&#10003;', BLOCK:'&#10007;', OTP_REQUIRED:'&#9650;' };
+  const titles = { ALLOW:'Access Granted', BLOCK:'Login Blocked', OTP_REQUIRED:'Verification Required' };
+  const subs = {
+    ALLOW:`Welcome, ${S.username}! Behavioral analysis passed.`,
+    BLOCK:'This login was blocked — suspicious signals detected.',
+    OTP_REQUIRED:'Step-up authentication required due to anomalies.',
+  };
+  document.getElementById('mr-icon').innerHTML  = icons[decision]||'&#9672;';
+  document.getElementById('mr-title').textContent = titles[decision]||'—';
+  document.getElementById('mr-sub').textContent   = subs[decision]||'';
+
+  const ring = document.getElementById('mr-ring');
+  ring.textContent = score.toFixed(0); ring.className = `score-ring ${lbl}`;
+
+  const bar = document.getElementById('mr-bar');
+  bar.style.width = score+'%';
+  bar.style.background = lbl==='low'?'#059669':lbl==='medium'?'#d97706':'#dc2626';
+
+  document.getElementById('mr-flags').innerHTML = flags.map(f => {
+    const cls = f.weight>0.7?'danger':f.weight>0.4?'warn':'';
+    const ico = f.weight>0.7?'&#9650;':f.weight>0.4?'&#9679;':'&#10003;';
+    return `<div class="flag ${cls}"><span class="fi">${ico}</span><div><div class="ft">${f.factor}</div><div class="fr">${f.reason}</div></div></div>`;
+  }).join('') || '<div class="flag"><span class="fi">&#10003;</span><div><div class="ft">No anomalies</div><div class="fr">All behavioral signals look normal.</div></div></div>';
+
+  const ac = document.getElementById('mr-action');
+  if (decision === 'ALLOW') {
+    ac.innerHTML = `<button class="btn btn-primary" onclick="enterApp(${score},'${label}')">Go to Dashboard →</button>`;
+  } else if (decision === 'BLOCK') {
+    ac.innerHTML = `<button class="btn btn-red" onclick="closeM('m-result')">Dismissed</button>`;
+  } else {
+    ac.innerHTML = `<button class="btn btn-primary" onclick="closeM('m-result')">OK</button>`;
+  }
+  openM('m-result');
+}
+
+function enterApp(score, label) {
+  closeM('m-result');
+  S.sessionStart = Date.now(); S.liveRisk = score;
+  document.getElementById('sb-uname').textContent  = S.username;
+  document.getElementById('set-uname').textContent = S.username;
+  document.getElementById('set-avatar').textContent = S.username[0].toUpperCase();
+  document.getElementById('cc-name').textContent    = S.username.toUpperCase() + ' DOE';
+  document.getElementById('db-risk-val').textContent = score.toFixed(1);
+  document.getElementById('db-risk-val').style.color = label==='LOW'?'var(--green)':label==='MEDIUM'?'var(--yellow)':'var(--red)';
+  document.getElementById('db-risk-lbl').textContent = label + ' RISK — ALLOWED';
+  document.getElementById('auth-wrap').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  nav('dashboard');
+  initCharts();
+  updateWidget(score, label.toLowerCase());
+  startMonitoring();
+  BC.postMessage({ type:'login', username:S.username, userId:S.userId, score, label, timestamp:new Date().toISOString() });
+  toast('Signed in as ' + S.username);
+}
+
+function doLogout() {
+  S.username=null; S.userId=null; S.sessionStart=null;
+  S.appKeystrokes=[]; S.appMouse=0; S.pasteCount=0; S.tabSwitches=0;
+  S.keystrokes=[]; S.mouseEvents=0; S.loginStart=null; S.lastKey=null;
+  S.txHistory=[]; updateBehMeter();
+  document.getElementById('app').style.display='none';
+  document.getElementById('auth-wrap').style.display='';
+  setSc('normal', document.getElementById('sc0'));
+  BC.postMessage({type:'logout',username:S.username,timestamp:new Date().toISOString()});
+  show('scr-login'); toast('Signed out.');
+}
+
+// ═══════════════════════════════════════════════════════
+// OTP
+// ═══════════════════════════════════════════════════════
+function onOtp(el, idx) {
+  if (el.value.length===1 && idx<5) document.querySelectorAll('.od')[idx+1].focus();
+}
+function verifyOTP() {
+  const entered = Array.from(document.querySelectorAll('.od')).map(i=>i.value).join('');
+  if (entered.length<6) { toast('Enter full 6-digit code.'); return; }
+  if (entered === S.otpCode) {
+    closeM('m-otp'); toast('OTP verified.');
+    enterApp(S.pendingLogin.score, S.pendingLogin.label);
+  } else toast('Wrong code. Use: ' + S.otpCode);
+}
+
+// ═══════════════════════════════════════════════════════
+// TRANSFER
+// ═══════════════════════════════════════════════════════
+async function doTransfer() {
+  if (!S.userId) { toast('Not logged in.'); return; }
+  const btn = document.querySelector('#pg-transfer .btn-primary');
+  const amt  = parseFloat(document.getElementById('tx-amt').value);
+  const to   = document.getElementById('tx-to').value.trim();
+  const type = document.getElementById('tx-type').value;
+  const dev  = document.getElementById('tx-dev').value.trim();
+  if (!amt||amt<=0||!to) { toast('Fill in transfer details.'); return; }
+
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span>Processing…';
+  try {
+    const r = await fetch(`${API}/tx/check`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        user_id:S.userId, session_id:'sess_'+Math.random().toString(36).slice(2,10),
+        amount:amt, currency:'USD', recipient_id:to, transaction_type:type,
+        device:{ user_agent:navigator.userAgent, screen_res:`${screen.width}x${screen.height}`, device_id:dev },
+      }),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail||'Failed');
+
+    const score=d.risk?.risk_score??0, decision=d.risk?.decision??'ALLOW', label=d.risk?.risk_label??'LOW', flags=d.risk?.risk_factors?.flags??[];
+    S.txHistory.unshift({amt,to,type,score,label,blocked:decision==='BLOCK',time:new Date()});
+    renderTxHistory();
+    showTxResult(amt,to,score,decision,label,flags);
+    BC.postMessage({type:'transaction',username:S.username,amount:amt,score,decision,label,flags,timestamp:new Date().toISOString()});
+  } catch(e) { toast('Error: '+e.message); }
+  finally { btn.disabled=false; btn.textContent='Send Transfer →'; }
+}
+
+async function doBill() {
+  if (!S.userId) { toast('Not logged in.'); return; }
+  const [biller,,amtStr] = document.getElementById('bill-biller').value.split('|');
+  const amt = parseFloat(document.getElementById('bill-amt').value)||parseFloat(amtStr)||50;
+  const btn = document.querySelector('#pg-bills .btn-primary');
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span>Processing…';
+  try {
+    const r = await fetch(`${API}/tx/check`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        user_id:S.userId, session_id:'bill_'+Date.now(),
+        amount:amt, currency:'USD', recipient_id:biller.replace(/ /g,'_').toLowerCase(),
+        transaction_type:'PAYMENT',
+        device:{ user_agent:navigator.userAgent, screen_res:`${screen.width}x${screen.height}`, device_id:'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4' },
+      }),
+    });
+    const d = await r.json();
+    const score=d.risk?.risk_score??0, decision=d.risk?.decision??'ALLOW', label=d.risk?.risk_label??'LOW', flags=d.risk?.risk_factors?.flags??[];
+    showTxResult(amt, biller, score, decision, label, flags);
+  } catch(e) { toast('Error: '+e.message); }
+  finally { btn.disabled=false; btn.textContent='Pay Bill →'; }
+}
+
+function setBiller() {
+  const parts = document.getElementById('bill-biller').value.split('|');
+  document.getElementById('bill-amt').value = parts[2]||'';
+}
+
+function makePayment() {
+  if (!S.userId) { toast('Not logged in.'); return; }
+  document.getElementById('tx-amt').value  = '1850';
+  document.getElementById('tx-to').value   = 'mortgage_lender';
+  document.getElementById('tx-type').value = 'PAYMENT';
+  nav('transfer'); toast('Mortgage payment loaded. Click Send.');
+}
+
+function showTxResult(amt, to, score, decision, label, flags) {
+  const lbl = label.toLowerCase();
+  document.getElementById('mr-icon').innerHTML  = decision==='ALLOW'?'&#10003;':decision==='BLOCK'?'&#10007;':'&#9650;';
+  document.getElementById('mr-title').textContent = decision==='ALLOW'?'Transaction Approved':decision==='BLOCK'?'Transaction Blocked':'Verification Required';
+  document.getElementById('mr-sub').textContent   = `$${amt.toFixed(2)} → ${to}`;
+  const ring=document.getElementById('mr-ring'); ring.textContent=score.toFixed(0); ring.className=`score-ring ${lbl}`;
+  const bar=document.getElementById('mr-bar'); bar.style.width=score+'%'; bar.style.background=lbl==='low'?'#059669':lbl==='medium'?'#d97706':'#dc2626';
+  document.getElementById('mr-flags').innerHTML = flags.map(f=>{
+    const cls=f.weight>0.7?'danger':f.weight>0.4?'warn':''; const ico=f.weight>0.7?'&#9650;':f.weight>0.4?'&#9679;':'&#10003;';
+    return `<div class="flag ${cls}"><span class="fi">${ico}</span><div><div class="ft">${f.factor}</div><div class="fr">${f.reason}</div></div></div>`;
+  }).join('')||'<div class="flag"><span class="fi">&#10003;</span><div><div class="ft">No anomalies</div><div class="fr">Transaction looks normal.</div></div></div>';
+  document.getElementById('mr-action').innerHTML=`<button class="btn ${decision==='BLOCK'?'btn-red':'btn-primary'}" onclick="closeM('m-result')">${decision==='BLOCK'?'Dismissed':'OK'}</button>`;
+  openM('m-result');
+}
+
+function renderTxHistory() {
+  const el = document.getElementById('tx-history-list');
+  el.innerHTML = S.txHistory.slice(0,6).map(tx=>
+    `<div class="tx-item">
+      <div class="tx-icon ${tx.blocked?'out':'in'}">${tx.blocked?'&#10007;':tx.type==='PAYMENT'?'&#9675;':'&#8593;'}</div>
+      <div class="tx-info"><div class="tx-name">${tx.to}</div><div class="tx-date">${tx.type} · ${tx.time.toLocaleTimeString()}</div><span class="badge ${tx.label.toLowerCase()}">${tx.label} · ${tx.score.toFixed(0)}</span></div>
+      <div class="tx-amount out">-$${tx.amt.toFixed(2)}</div>
+    </div>`
+  ).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// AI MONITOR WIDGET
+// ═══════════════════════════════════════════════════════
+function toggleWidget() {
+  S.widgetOpen = !S.widgetOpen;
+  document.getElementById('aiw-panel').classList.toggle('hidden', !S.widgetOpen);
+}
+
+function updateWidget(score, labelOverride) {
+  if (score === undefined) score = S.liveRisk;
+  const lbl = labelOverride || (score < 35 ? 'low' : score < 70 ? 'medium' : 'high');
+  S.liveRisk = score;
+  const color = lbl==='low'?'#22c55e':lbl==='medium'?'#eab308':'#ef4444';
+
+  document.getElementById('aiw-score').textContent = score.toFixed(0);
+  document.getElementById('aiw-score').style.color = color;
+  document.getElementById('aiw-lbl').textContent   = lbl.toUpperCase() + ' RISK';
+  document.getElementById('aiw-lbl').style.color   = color;
+  document.getElementById('aiw-bar').style.width      = score + '%';
+  document.getElementById('aiw-bar').style.background = color;
+  document.getElementById('aiw-pill-score').textContent = score.toFixed(0) + ' ' + lbl.toUpperCase();
+  const dot = document.getElementById('aiw-dot'); dot.className = 'aiw-dot ' + lbl;
+
+  // metrics
+  const now = Date.now(), recent = S.appKeystrokes.filter(t=>now-t<60000);
+  document.getElementById('aw-ks').textContent   = recent.length + '/min';
+  document.getElementById('aw-ms').textContent   = S.appMouseSpeed > 80 ? 'Fast' : S.appMouseSpeed > 30 ? 'Normal' : 'Slow';
+  document.getElementById('aw-paste').textContent = S.pasteCount > 0 ? '▲ ' + S.pasteCount : 'None';
+  document.getElementById('aw-tabs').textContent  = S.tabSwitches;
+  if (S.sessionStart) {
+    const sec = Math.floor((Date.now()-S.sessionStart)/1000);
+    document.getElementById('aw-sess').textContent = `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;
+  }
+
+  BC.postMessage({
+    type: 'behavioral_update',
+    username: S.username, userId: S.userId, page: S.currentPage,
+    score, label: lbl,
+    metrics: { keystrokesPerMin: recent.length, mouseSpeed: S.appMouseSpeed, pasteCount: S.pasteCount, tabSwitches: S.tabSwitches, sessionDurationMs: S.sessionStart ? Date.now()-S.sessionStart : 0 },
+    timestamp: new Date().toISOString(),
+  });
+}
+
+async function computeLiveRisk() {
+  if (!S.sessionStart) return;
+  const now = Date.now(), recent = S.appKeystrokes.filter(t=>now-t<60000);
+  const kpm = recent.length;
+  const avgInterval = kpm > 0 ? 60000/kpm : 120;
+  try {
+    const r = await fetch(`${API}/risk/score`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        login_duration_ms: 5000, keystroke_avg_interval: avgInterval,
+        mouse_event_count: S.appMouse, typing_speed_wpm: Math.round(kpm/5),
+        is_new_device: false, is_new_ip: false, is_unusual_hour: new Date().getHours()<6,
+        geo_distance_km: 0, autofill_detected: false,
+      }),
+    });
+    const d = await r.json();
+    S.riskHistory.push({ score:d.risk_score, t:new Date().toISOString() });
+    if (S.riskHistory.length > 30) S.riskHistory.shift();
+    updateWidget(d.risk_score, d.risk_label.toLowerCase());
+  } catch {}
+}
+
+function startMonitoring() {
+  setInterval(computeLiveRisk, 15000);
+  setInterval(updateWidget, 3000);
+}
+
+// ═══════════════════════════════════════════════════════
+// MODALS
+// ═══════════════════════════════════════════════════════
+function openM(id)  { document.getElementById(id).classList.add('show'); }
+function closeM(id) { document.getElementById(id).classList.remove('show'); }
+
+// ═══════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════
+let _tt;
+function toast(msg) {
+  const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(_tt); _tt = setTimeout(()=>t.classList.remove('show'), 3200);
+}
+
+// ═══════════════════════════════════════════════════════
+// CHARTS
+// ═══════════════════════════════════════════════════════
+function initCharts() {
+  new Chart(document.getElementById('spendChart').getContext('2d'),{
+    type:'doughnut',
+    data:{
+      labels:['Groceries','Utilities','Dining','Shopping','Health','Other'],
+      datasets:[{data:[320,220,180,290,95,145],backgroundColor:['#1a56db','#059669','#d97706','#7c3aed','#dc2626','#64748b'],borderColor:'#fff',borderWidth:3}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#6b7280',font:{size:11}}}}}
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+setSc('normal', document.getElementById('sc0'));
+document.getElementById('auth-wrap').style.display = '';
+document.getElementById('app').style.display = 'none';
+</script>
+</body>
+</html>
