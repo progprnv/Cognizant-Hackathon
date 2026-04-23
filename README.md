@@ -276,4 +276,4 @@ after each legitimate login, so the baseline adapts to natural behaviour changes
 
 ## License
 
-Built for Cognizant Technoverse 2026 hackathon. Internal use only.
+Built for Cognizant Technoverse 2026 hackathon. 
